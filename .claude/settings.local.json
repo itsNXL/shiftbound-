@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node:*)",
+      "Bash(npm create:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "Bash(ngrok version:*)",
+      "Bash(winget install:*)",
+      "Bash(ngrok config:*)",
+      "Bash(\"/c/Users/Pc/AppData/Local/Microsoft/WinGet/Packages/Ngrok.Ngrok_Microsoft.Winget.Source_8wekyb3d8bbwe/ngrok\" config:*)",
+      "Bash(\"/c/Users/Pc/AppData/Local/Microsoft/WinGet/Packages/Ngrok.Ngrok_Microsoft.Winget.Source_8wekyb3d8bbwe/ngrok\" http:*)",
+      "Bash(curl:*)",
+      "Read(//c/Users/Pc/AppData/Local/ngrok/**)",
+      "Bash(unzip -o ngrok.zip)",
+      "Bash(./ngrok version)",
+      "Bash(\"C:/Users/Pc/AppData/Local/ngrok/ngrok.exe\" config:*)",
+      "Bash(\"C:/Users/Pc/AppData/Local/ngrok/ngrok.exe\" http:*)",
+      "Bash(taskkill:*)"
+    ]
+  }
+}

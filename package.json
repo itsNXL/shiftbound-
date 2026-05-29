@@ -1,0 +1,27 @@
+{
+  "name": "shiftbound",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently --names SRV,WEB -c blue,cyan \"npm run server:dev\" \"vite\"",
+    "server:dev": "tsx watch server/index.ts",
+    "build": "tsc && vite build && tsc -p server/tsconfig.json",
+    "server:build": "tsc -p server/tsconfig.json",
+    "start": "node server/dist/index.js",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "phaser": "^3.88.2",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^22.15.29",
+    "concurrently": "^9.1.2",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
+  }
+}

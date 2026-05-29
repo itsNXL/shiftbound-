@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SHIFTBOUND</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+    <style>
+      *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+      html, body {
+        width: 100%; height: 100%;
+        background: #000;
+        overflow: hidden;
+        font-family: 'Space Mono', monospace;
+      }
+
+      /* Wrapper is always 1280×720 in its own coordinate space;
+         JS applies a CSS scale to fit the viewport. */
+      #game-wrapper {
+        position: absolute;
+        width: 1280px;
+        height: 720px;
+        transform-origin: top left;
+      }
+
+      canvas { display: block; position: absolute; top: 0; left: 0; }
+
+      /* ── HUD overlay ────────────────────────────────────────────── */
+      #hud {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 10;
+      }
+
+      /* ── Title bar ──────────────────────────────────────────────── */
+      #hud-title {
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 30px;
+        background: linear-gradient(180deg, rgba(0,0,0,0.75) 0%, transparent 100%);
+      }
+      #hud-title span {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 10px;
+        color: rgba(255,255,255,0.11);
+      }
+
+      /* ── Controls hint ──────────────────────────────────────────── */
+      #hud-controls {
+        position: absolute;
+        bottom: 14px; left: 0; right: 0;
+        display: flex;
+        justify-content: center;
+      }
+      #hud-controls span {
+        font-size: 9px;
+        color: rgba(255,255,255,0.09);
+        letter-spacing: 0.5px;
+      }
+
+      /* ── Player panels ──────────────────────────────────────────── */
+      .player-panel {
+        position: absolute;
+        top: 68px;
+        width: 215px;
+        background: linear-gradient(140deg, rgba(5,9,20,0.96) 0%, rgba(10,16,32,0.92) 100%);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 6px;
+        padding: 12px 14px 10px 16px;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+      }
+      .player-panel[data-player="0"] { left: 14px; }
+      .player-panel[data-player="1"] { right: 14px; }
+      .player-panel[data-player="2"] { left: 244px; }
+      .player-panel[data-player="3"] { right: 244px; }
+      /* Second row for 5-8 players */
+      .player-panel[data-player="4"] { left: 14px;   top: 178px; }
+      .player-panel[data-player="5"] { right: 14px;  top: 178px; }
+      .player-panel[data-player="6"] { left: 244px;  top: 178px; }
+      .player-panel[data-player="7"] { right: 244px; top: 178px; }
+
+      .panel-side-bar {
+        position: absolute;
+        top: 6px; left: 0;
+        width: 3px;
+        height: calc(100% - 12px);
+        border-radius: 0 2px 2px 0;
+      }
+      .panel-top-bar {
+        position: absolute;
+        top: 0; left: 6px; right: 6px;
+        height: 2px;
+        border-radius: 2px;
+        transition: background 0.2s;
+      }
+
+      /* ── Header ─────────────────────────────────────────────────── */
+      .panel-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 9px;
+        padding-left: 4px;
+      }
+      .player-num {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 26px;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -1px;
+      }
+      .form-name {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 3px;
+        transition: color 0.15s, text-shadow 0.15s;
+      }
+
+      /* ── Stamina ─────────────────────────────────────────────────── */
+      .stamina-row {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 8px;
+      }
+      .stamina-label {
+        font-size: 8px;
+        letter-spacing: 2px;
+        color: rgba(255,255,255,0.18);
+        width: 48px;
+        flex-shrink: 0;
+      }
+      .stamina-bar {
+        display: flex;
+        gap: 2px;
+        flex: 1;
+        height: 7px;
+      }
+      .stamina-seg {
+        flex: 1;
+        border-radius: 1px;
+        transition: background 0.08s;
+      }
+      .stamina-seg.empty {
+        background: rgba(255,255,255,0.04) !important;
+        box-shadow: none !important;
+      }
+      @keyframes critPulse {
+        0%,100% { opacity:1; } 50% { opacity:0.35; }
+      }
+      .stamina-bar.critical .stamina-seg:not(.empty) {
+        animation: critPulse 0.35s ease infinite;
+      }
+
+      /* ── Badges ──────────────────────────────────────────────────── */
+      .badges {
+        display: flex;
+        gap: 5px;
+        min-height: 15px;
+        padding-left: 4px;
+      }
+      .badge {
+        font-size: 8px;
+        letter-spacing: 1.5px;
+        padding: 2px 7px;
+        border-radius: 2px;
+        border: 1px solid;
+      }
+      @keyframes badgePop {
+        from { transform: scale(0.75); opacity: 0; }
+        to   { transform: scale(1);   opacity: 1; }
+      }
+      .badge { animation: badgePop 0.12s ease; }
+
+      /* ── Global status bar ──────────────────────────────────────── */
+      #hud-status {
+        position: absolute;
+        top: 34px; left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        background: linear-gradient(180deg, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.45) 100%);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 4px;
+        padding: 5px 18px;
+        pointer-events: none;
+      }
+      .status-chip {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        transition: color 0.2s, text-shadow 0.2s;
+      }
+      .status-chip + .status-chip::before {
+        content: '|';
+        margin-right: 16px;
+        color: rgba(255,255,255,0.12);
+      }
+
+      /* ── Form switch flash ───────────────────────────────────────── */
+      @keyframes formFlash {
+        0%   { opacity:0.9; }
+        100% { opacity:0; }
+      }
+      .form-flash {
+        position: absolute;
+        inset: 0;
+        border-radius: 6px;
+        pointer-events: none;
+        animation: formFlash 0.3s ease forwards;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-wrapper">
+      <div id="hud">
+        <div id="hud-title"><span>SHIFTBOUND</span></div>
+        <div id="hud-controls">
+          <span>LMB FIRE &middot; RMB MODE &nbsp;&nbsp;|&nbsp;&nbsp; P1: A/D MOVE &middot; SPACE JUMP &middot; F USE &middot; R FORM &middot; E GRAB &nbsp;&nbsp;|&nbsp;&nbsp; P2: ARROWS &middot; UP JUMP &middot; N USE &middot; K FORM &middot; SHIFT GRAB</span>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
