@@ -10,7 +10,7 @@ const http = createServer(app);
 const io   = new Server(http, { cors: { origin: '*' } });
 
 // Serve built client (production)
-const distDir = path.join(__dirname, '..', 'dist');
+const distDir = path.join(__dirname, '..', '..', 'dist');
 app.use(express.static(distDir));
 app.get('*', (_req, res) => res.sendFile(path.join(distDir, 'index.html')));
 
